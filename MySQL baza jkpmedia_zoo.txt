@@ -1,0 +1,35 @@
+INSERT INTO pets (id, incoming_date, microchip_number, image_path, sex, in_shelter)
+SELECT 
+    id,
+    first_name,
+    last_name,
+    REPLACE(image, 'https://jkpmediana.rs/zoo/upload/', 'https://po.jkpmediana.rs/pet-shelter/uploads/pets/'),
+    dogs_sex,
+    is_visible
+FROM dogs;
+
+UPDATE pets p
+JOIN dogs d ON p.id = d.id
+SET p.sex = CASE
+    WHEN d.dogs_sex LIKE '%Å½enka%' OR d.dogs_sex LIKE '%Ženka%' OR LOWER(d.dogs_sex) LIKE '%zenka%' OR LOWER(d.dogs_sex) LIKE '%ženka%' THEN 'Female'
+    WHEN d.dogs_sex LIKE '%MuÅ¾jak%' OR d.dogs_sex LIKE '%Mužjak%' OR LOWER(d.dogs_sex) LIKE '%muzjak%' OR LOWER(d.dogs_sex) LIKE '%mužjak%' THEN 'Male'
+    ELSE p.sex
+END;
+
+UPDATE pets
+SET species = 'dog'
+WHERE species IS NULL OR species = '';
+
+UPDATE pets
+SET image_path = CONCAT('https://po.jkpmediana.rs/pet-shelter/uploads/pets', image_path);
+
+UPDATE pets
+SET status = CASE
+    WHEN in_shelter = 1 THEN 'fostered'
+    WHEN in_shelter = 0 THEN 'adopted'
+    ELSE status
+END;
+
+UPDATE pets
+SET image_path = NULL
+WHERE image_path = 'https://po.jkpmediana.rs/pet-shelter/uploads/pets/';
