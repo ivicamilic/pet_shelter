@@ -25,7 +25,7 @@ return [
     'created_by' => 'Kreirao',
     'created_at' => 'Datum kreiranja',
     'actions' => 'Akcije',
-    'add_pet' => 'Dodaj ljubimca.',
+    'add_pet' => 'Dodaj ljubimca',
     'view_pets' => 'Pregledaj ljubimce.',
     'register_user' => 'Registruj korisnika.',
     'select_species' => 'Izaberite vrstu.',
@@ -86,6 +86,8 @@ return [
     'return_location' => 'Lokacija vraćanja',
     'return_date' => 'Datum povratka',
     'pet_added' => 'Ljubimac je uspešno dodat!',
+    'selected_image' => 'Odabrana slika',
+
 
     // Identification
     'identification' => 'Identifikacija',

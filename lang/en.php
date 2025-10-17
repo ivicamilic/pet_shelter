@@ -71,9 +71,6 @@ return [
 
     // Identification
     'identification' => 'Identification',
-    'add_identification' => 'Add Identification',
-    'edit_identification' => 'Edit Identification',
-    'save_identification' => 'Save Identification',
     'microchip_number' => 'Microchip Number',
     'microchip_date' => 'Microchip Date',
     'microchip_location' => 'Microchip Location',

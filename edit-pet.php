@@ -69,26 +69,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     error_log('POST data: ' . print_r($_POST, true));
 
-    // Handle image upload // Obrada slanja slike
+    // Handle image upload with resizing // Obrada slanja slike sa promenom veličine
     $image_path = $pet['image_path'];
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = 'uploads/pets/';
         if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true); // Create upload directory if not exists // Kreiraj direktorijum za slike ako ne postoji
+            mkdir($upload_dir, 0755, true);
         }
-        $file_ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION)); // Get file extension // Uzmi ekstenziju fajla
-        $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // Allowed extensions // Dozvoljene ekstenzije
+        $file_ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (!in_array($file_ext, $allowed_ext)) {
-            die('Invalid image format'); // Stop if format is not allowed // Zaustavi ako format nije dozvoljen
+            die('Invalid image format');
         }
-        $file_name = uniqid() . '.' . $file_ext; // Generate unique file name // Generiši jedinstveno ime fajla
+        
+        // Resize image to max 800px // Promeni veličinu slike na max 800px
+        $source = $_FILES['image']['tmp_name'];
+        $imageInfo = getimagesize($source);
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+        
+        $maxSize = 800;
+        if ($width > $maxSize || $height > $maxSize) {
+            if ($width > $height) {
+                $newWidth = $maxSize;
+                $newHeight = intval($height * $maxSize / $width);
+            } else {
+                $newHeight = $maxSize;
+                $newWidth = intval($width * $maxSize / $height);
+            }
+        } else {
+            $newWidth = $width;
+            $newHeight = $height;
+        }
+        
+        switch ($imageInfo['mime']) {
+            case 'image/jpeg':
+                $sourceImage = imagecreatefromjpeg($source);
+                break;
+            case 'image/png':
+                $sourceImage = imagecreatefrompng($source);
+                break;
+            case 'image/gif':
+                $sourceImage = imagecreatefromgif($source);
+                break;
+            case 'image/webp':
+                $sourceImage = imagecreatefromwebp($source);
+                break;
+            default:
+                die('Unsupported image type');
+        }
+        
+        $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+        
+        if ($imageInfo['mime'] == 'image/png' || $imageInfo['mime'] == 'image/gif') {
+            imagealphablending($resizedImage, false);
+            imagesavealpha($resizedImage, true);
+            $transparent = imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
+            imagefilledrectangle($resizedImage, 0, 0, $newWidth, $newHeight, $transparent);
+        }
+        
+        imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+        
+        $file_name = uniqid() . '.jpg';
         $target_path = $upload_dir . $file_name;
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_path)) {
+        
+        if (imagejpeg($resizedImage, $target_path, 85)) {
             if (!empty($pet['image_path']) && file_exists($pet['image_path'])) {
                 unlink($pet['image_path']); // Delete old image // Obriši staru sliku
             }
-            $image_path = $target_path; // Save new image path // Sačuvaj novu putanju slike
+            $image_path = $target_path;
         }
+        
+        imagedestroy($sourceImage);
+        imagedestroy($resizedImage);
     }
 
     // Update pet data using prepared statement // Ažuriraj podatke o ljubimcu koristeći pripremljeni upit
@@ -446,7 +499,7 @@ document.getElementById('file-upload-button').addEventListener('click', function
 document.getElementById('image-upload').addEventListener('change', function() {
     const fileName = this.files[0] ? this.files[0].name : '';
     document.getElementById('file-name').value = fileName;
-    
+        
     // Show image preview
     if (this.files && this.files[0]) {
         const reader = new FileReader();
@@ -472,6 +525,8 @@ document.getElementById('image-upload').addEventListener('change', function() {
     }
 
 });
+
+
 </script>
 </body>
 </html>

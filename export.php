@@ -24,7 +24,7 @@ if ($search !== '') {
     $params[] = "%$search%";
 }
 
-$sql .= $where . " ORDER BY id DESC";
+$sql .= $where . " ORDER BY incoming_date DESC";
 $pets = $db->fetchAll($sql, $params); // Fetch pets // Uzmi ljubimce
 
 if ($format === 'xls') {
@@ -76,14 +76,26 @@ if ($format === 'xls') {
         <meta charset="UTF-8">
         <title>' . ($L['pets_report'] ?? 'Pets Report') . '</title>
         <style>
-            @media print { .no-print { display: none; } }
+            @media print {
+                .no-print { display: none; }
+                thead { display: table-header-group; }
+                tfoot { display: table-footer-group; }
+                tbody { display: table-row-group; }
+            }
             body { font-family: Arial, sans-serif; margin: 20px; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            th, td { border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; }
+            table { width: auto; border-collapse: collapse; font-size: 12px; margin: 0 auto; }
+            th, td { border: 1px solid #000; padding: 5px 20px; text-align: center; vertical-align: middle; }
             th { background-color: #f0f0f0; font-weight: bold; }
-            img { max-width: 50px; max-height: 50px; object-fit: cover; }
+            img { max-width: 40px; max-height: 40px; object-fit: cover; }
             h2 { text-align: center; margin-bottom: 20px; }
             .print-btn { margin: 20px 0; text-align: center; }
+            @page {
+                margin: 1cm;
+                @bottom-center {
+                    content: "Stranica " counter(page) " od " counter(pages);
+                    font-size: 10px;
+                }
+            }
         </style>
         <script>
             // PDF opens in new tab without auto-printing // PDF se otvara u novom tabu bez automatske štampe
@@ -98,18 +110,21 @@ if ($format === 'xls') {
         </div>
         <h2>' . ($L['pets_report'] ?? 'Pets Report') . '</h2>
         <table>
-            <tr>
-                <th>' . ($L['image'] ?? 'Image') . '</th>
-                <th>' . ($L['sex'] ?? 'Sex') . '</th>
-                <th>' . ($L['microchip_number'] ?? 'Microchip #') . '</th>
-                <th>' . ($L['capture_location'] ?? 'Capture Location') . '</th>
-                <th>' . ($L['incoming_date'] ?? 'Date') . '</th>
-                <th>' . ($L['presence_in_shelter'] ?? 'Presence') . '</th>
-                <th>' . ($L['cage_number'] ?? 'Cage #') . '</th>
-            </tr>';
+            <thead>
+                <tr>
+                    <th>' . ($L['image'] ?? 'Image') . '</th>
+                    <th>' . ($L['sex'] ?? 'Sex') . '</th>
+                    <th>' . ($L['microchip_number'] ?? 'Microchip #') . '</th>
+                    <th>' . ($L['capture_location'] ?? 'Capture Location') . '</th>
+                    <th>' . ($L['incoming_date'] ?? 'Date') . '</th>
+                    <th>' . ($L['presence_in_shelter'] ?? 'Presence') . '</th>
+                    <th>' . ($L['cage_number'] ?? 'Cage #') . '</th>
+                </tr>
+            </thead>
+            <tbody>';
     
     foreach ($pets as $pet) {
-        $imageCell = !empty($pet['image_path']) ? '<img src="' . htmlspecialchars($pet['image_path']) . '" style="width:50px;height:50px;object-fit:cover;">' : ($L['no_image'] ?? 'No image');
+                $imageCell = !empty($pet['image_path']) ? '<img src="' . htmlspecialchars($pet['image_path']) . '" style="width:50px;height:50px;object-fit:cover;">' : ($L['no_image'] ?? 'No image');
         echo '<tr>
                 <td>' . $imageCell . '</td>
                 <td>' . htmlspecialchars($L[$pet['sex']] ?? $pet['sex'] ?? '') . '</td>
@@ -120,8 +135,8 @@ if ($format === 'xls') {
                 <td>' . htmlspecialchars($L[$pet['cage_number']] ?? $pet['cage_number'] ?? '') . '</td>
               </tr>';
     }
-    
-    echo '</table>
+    echo '</tbody>
+</table>
     </body>
     </html>';
 }
