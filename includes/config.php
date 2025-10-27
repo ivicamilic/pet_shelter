@@ -20,6 +20,10 @@ function isStaff() {
     return isset($_SESSION['role']) && $_SESSION['role'] === 'staff';
 }
 
+function isInfo() {
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'info';
+}
+
 function isAdminOrStaff() {
     return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'staff']);
 }

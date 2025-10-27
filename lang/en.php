@@ -7,7 +7,7 @@ return [
     'pet_details' => 'Pet Details',
     'back_to_all_pets' => 'Back to All Pets',
     'edit' => 'Edit',
-    'deletze' => 'Delete',
+    'delete' => 'Delete',
     'save' => 'Save',
     'cancel' => 'Cancel',
     'close' => 'Close',
@@ -32,6 +32,8 @@ return [
     'no_identification_data' => 'No identification data available.',
     'username_or_email_exists' => 'Username or email already exists.',
     'user_updated_successfully' => 'User updated successfully!',
+    'user_deleted' => 'User deleted successfully!', 
+    'registration_success' => 'Registration successful! You can now log in.', 
 
 
     // Pet info
@@ -180,4 +182,6 @@ return [
     'are_you_sure' => 'Are you sure?',
     'export_xls' => 'Export XLS',
     'export_pdf' => 'Export PDF',
+    'save_not_allowed' => 'This action cannot be performed due to insufficient privileges',
+    'delete_not_allowed' => 'This action cannot be performed due to insufficient privileges',
 ];

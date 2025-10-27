@@ -107,10 +107,10 @@ $search = $_GET['search'] ?? '';
                     <td class="text-center">
                         <div class="d-flex gap-1">
                             <a href="view-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-info"><?php echo $L['view'] ?? 'View'; // View button // Dugme za prikaz ?></a>
-                            <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff'): ?>
+                            <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer'])): ?>
                                 <a href="edit-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-warning"><?php echo $L['edit'] ?? 'Edit'; // Edit button // Dugme za izmenu ?></a>
                             <?php endif; ?>
-                            <?php if (($_SESSION['role'] === 'admin') || ($_SESSION['role'] === 'staff' && $_SESSION['user_id'] == $pet['created_by'])): ?>
+                            <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer']) || ($_SESSION['role'] === 'staff' && $_SESSION['user_id'] == $pet['created_by'])): ?>
                                 <!-- Delete button with confirmation // Dugme za brisanje sa potvrdom -->
                                 <a href="delete-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirmDelete(<?php echo $pet['id']; ?>, '<?php echo addslashes($pet['microchip_number'] ?? ''); ?>')">
                                     <?php echo $L['delete'] ?? 'Delete'; // Delete button // Dugme za brisanje ?>

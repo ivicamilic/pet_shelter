@@ -7,7 +7,7 @@ require_once 'includes/functions.php'; // Load helper functions // Učitaj pomo�
 redirectIfNotLoggedIn(); // Redirect if user is not logged in // Preusmeri ako korisnik nije prijavljen
 redirectIfNotAdmin();    // Redirect if user is not admin // Preusmeri ako korisnik nije admin
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
 $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
 
 if (!isset($_GET['id'])) {
@@ -104,6 +104,7 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                     <select class="form-select" id="role" name="role" required>
                         <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>><?php echo $L['admin'] ?? 'Admin'; ?></option>
                         <option value="staff" <?php echo $user['role'] === 'staff' ? 'selected' : ''; ?>><?php echo $L['staff'] ?? 'Staff'; ?></option>
+                        <option value="info" <?php echo $user['role'] === 'info' ? 'selected' : ''; ?>><?php echo $L['info'] ?? 'Info'; ?></option>
                         <option value="volunteer" <?php echo $user['role'] === 'volunteer' ? 'selected' : ''; ?>><?php echo $L['volunteer'] ?? 'Volunteer'; ?></option>
                     </select>
                 </div>

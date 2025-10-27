@@ -3,7 +3,7 @@ require_once 'includes/config.php'; // Load configuration // Učitaj konfiguraci
 require_once 'includes/db.php';     // Load database connection // Učitaj konekciju sa bazom
 require_once 'includes/auth.php';   // Load authentication // Učitaj autentifikaciju
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
 $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
 
 if (isLoggedIn()) {

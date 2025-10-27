@@ -3,16 +3,12 @@ require_once 'includes/config.php'; // Load configuration // Učitaj konfiguraci
 require_once 'includes/auth.php';   // Load authentication // Učitaj autentifikaciju
 require_once 'includes/db.php';     // Load database connection // Učitaj konekciju sa bazom
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to Serbian // Uzmi jezik iz sesije ili podesi na srpski
 $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
 
 redirectIfNotLoggedIn(); // Redirect if user is not logged in // Preusmeri ako korisnik nije prijavljen
 
-// Only allow non-volunteers // Dozvoli samo korisnicima koji nisu volonteri
-if ($_SESSION['role'] === 'Volunteer') {
-    header('Location: pets.php'); // Redirect to pets // Preusmeri na ljubimce
-    exit();
-}
+// Allow all logged in users - deletion will be prevented for volunteers // Dozvoli sve prijavljene korisnike - brisanje će biti sprečeno za volontere
 
 // Check if pet id is provided // Proveri da li je prosleđen id ljubimca
 if (!isset($_GET['id'])) {
@@ -38,6 +34,13 @@ if ($_SESSION['role'] === 'staff' && $pet['created_by'] != $_SESSION['user_id'])
 }
 
 // JavaScript confirmation should be handled on the calling page // Potvrda brisanja se radi na klijent strani
+
+// Check if user is volunteer role - prevent delete // Proveri da li je korisnik "volunteer" uloge - spreči brisanje
+if ($_SESSION['role'] === 'volunteer') {
+    $_SESSION['error'] = $L['delete_not_allowed'] ?? 'Delete not allowed for this role'; // Set error message // Postavi poruku o grešci
+    header('Location: pets.php'); // Redirect back // Preusmeri nazad
+    exit();
+}
 
 // Delete related records first // Prvo obriši povezane podatke
 try {

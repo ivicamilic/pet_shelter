@@ -2,15 +2,15 @@
 require_once 'includes/config.php'; // Load configuration // Učitaj konfiguraciju
 require_once 'includes/db.php';     // Load database connection // Učitaj konekciju sa bazom
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
 $L = [];
 if (file_exists(__DIR__ . '/lang/' . $lang . '.php')) {
     $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
 }
 
-// Check if user is logged in and not a Volunteer // Proveri da li je korisnik prijavljen i da nije volonter
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] === 'Volunteer') {
-    header('Location: pets.php'); // Redirect to pets page // Preusmeri na stranicu sa ljubimcima
+// Check if user is logged in // Proveri da li je korisnik prijavljen
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login // Preusmeri na prijavu
     exit();
 }
 
@@ -24,6 +24,13 @@ $pet_id = (int)$_GET['pet_id']; // Get pet_id as integer // Uzmi pet_id kao ceo 
 
 // Handle form submission // Obradi slanje forme
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if user is volunteer role - prevent save // Proveri da li je korisnik "volunteer" uloge - spreči čuvanje
+    if ($_SESSION['role'] === 'volunteer') {
+        $_SESSION['error'] = $L['save_not_allowed'] ?? 'Save not allowed for this role'; // Set error message // Postavi poruku o grešci
+        header("Location: view-pet.php?id=$pet_id"); // Redirect back // Preusmeri nazad
+        exit();
+    }
+
     // No required field validation needed // Nema potrebe za validacijom obaveznih polja
 
     // Prepare and sanitize input // Pripremi i očisti ulaz

@@ -68,6 +68,14 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
 ?>
 
 <div class="container mt-4">
+    <?php if (isset($_SESSION['error'])): ?>
+        <script>
+            // Show JavaScript alert for errors // Prikaži JavaScript alert za greške
+            alert("<?php echo addslashes($_SESSION['error']); ?>");
+        </script>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
     <?php if (isset($_SESSION['message'])): ?>
         <div class="alert alert-<?php echo $_SESSION['message_type'] ?? 'info'; ?> alert-dismissible fade show" role="alert">
             <?php echo htmlspecialchars($_SESSION['message']); // Display message safely // Prikaži poruku bezbedno ?>
@@ -120,7 +128,7 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
             <a href="export.php?format=pdf" target="_blank" class="btn btn-outline-danger btn-sm ms-2">
                 <i class="bi bi-file-earmark-pdf"></i> <?php echo $L['export_pdf'] ?? 'Export PDF'; ?>
             </a>
-            <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff'): ?>
+            <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff' || $_SESSION['role'] === 'volunteer'): ?>
                 <a href="add-pet.php" class="btn btn-outline-primary btn-sm ms-2"><i class="bi bi-plus-circle"></i> <?php echo $L['add_new_pet'] ?? 'Add New Pet'; ?></a>
             <?php endif; ?>
         </div>

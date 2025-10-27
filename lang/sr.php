@@ -46,7 +46,8 @@ return [
     'are_you_sure_delete_pet' => 'Da li ste sigurni da želite da obrišete ovog ljubimca?',
     'username_or_email_exists' => 'Korisničko ime ili email već postoji.',
     'user_updated_successfully' => 'Korisnik je uspešno izmenjen!',
-
+    'user_deleted'  => 'Korisnik je uspešno obrisan!',
+    'registration_success' => 'Registracija je uspešna! Sada se možete prijaviti.',
 
     
     // Pet info
@@ -213,4 +214,6 @@ return [
     'confirm_new_password' => 'Potvrdi lozinku',
     'leave_blank_keep_password' => 'Ostavite prazno da biste zadržali trenutnu lozinku',
     'no_image' => 'Nema slike',
+    'save_not_allowed' => 'Ova akcija se ne može izvršiti zbog nedostatka privilegija',
+    'delete_not_allowed' => 'Ova akcija se ne može izvršiti zbog nedostatka privilegija',
 ];

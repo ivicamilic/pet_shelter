@@ -1,3 +1,4 @@
+
 <?php
 require_once 'includes/config.php'; // Load configuration // Učitaj konfiguraciju
 require_once 'includes/db.php';     // Load database connection // Učitaj konekciju sa bazom
@@ -14,7 +15,7 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'sr'])) {
     exit();
 }
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to Serbian // Uzmi jezik iz sesije ili podesi na srpski
 $L = [];
 if (file_exists(__DIR__ . '/lang/' . $lang . '.php')) {
     $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
@@ -26,13 +27,15 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Only allow non-volunteers // Dozvoli samo korisnicima koji nisu volonteri
-if ($_SESSION['role'] === 'Volunteer') {
-    header('Location: pets.php'); // Redirect to pets // Preusmeri na ljubimce
-    exit();
-}
+// Allow all logged in users // Dozvoli sve prijavljene korisnike
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if user is volunteer role - prevent save // Proveri da li je korisnik "volunteer" uloge - spreči čuvanje
+    if ($_SESSION['role'] === 'volunteer') {
+        $_SESSION['error'] = $L['save_not_allowed'] ?? 'Save not allowed for this role'; // Set error message // Postavi poruku o grešci
+        header("Location: add-pet.php"); // Redirect back // Preusmeri nazad
+        exit();
+    }
     // Handle image upload with resizing // Obrada slanja slike sa promenom veličine
     $image_path = null;
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -155,36 +158,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pet_id = $db->getConnection()->insert_id; // Get inserted pet ID // Uzmi ID unetog ljubimca
 
     // Insert vaccination if provided // Unesi vakcinaciju ako je prosleđena
-    if (!empty($_POST['vaccine_type']['new']) && !empty($_POST['vaccine_name']['new'])) {
+    if (isset($_POST['vaccine_type']['new']) && !empty($_POST['vaccine_type']['new']) &&
+        isset($_POST['vaccine_name']['new']) && !empty($_POST['vaccine_name']['new'])) {
         $db->query(
             "INSERT INTO vaccinations (pet_id, vaccine_type, vaccine_name, batch_number, vaccination_date, expiry_date, veterinarian, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $pet_id,
                 $_POST['vaccine_type']['new'],
                 $_POST['vaccine_name']['new'],
-                $_POST['batch_number']['new'],
-                $_POST['vaccination_date']['new'] ?: null,
-                $_POST['expiry_date']['new'] ?: null,
-                $_POST['veterinarian']['new'],
-                $_POST['notes']['new']
+                $_POST['batch_number']['new'] ?? null,
+                $_POST['vaccination_date']['new'] ?: '0000-00-00',
+                $_POST['expiry_date']['new'] ?: '0000-00-00',
+                $_POST['veterinarian']['new'] ?? '',
+                $_POST['notes']['new'] ?? ''
             ]
         );
     }
 
     // Insert health check if provided // Unesi zdravstveni pregled ako je prosleđen
-    if (!empty($_POST['check_date']['new'])) {
+    if (isset($_POST['check_date']['new']) && !empty($_POST['check_date']['new']) &&
+        isset($_POST['health_status']['new']) && !empty($_POST['health_status']['new'])) {
         $db->query(
             "INSERT INTO health_checks (pet_id, check_date, veterinarian, health_status, diagnosis, treatment_plan, clinical_exam, animal_statement, health_notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $pet_id,
-                $_POST['check_date']['new'] ?: null,
-                $_POST['health_veterinarian']['new'],
+                $_POST['check_date']['new'] ?: '0000-00-00',
+                $_POST['health_veterinarian']['new'] ?? '',
                 $_POST['health_status']['new'],
-                $_POST['diagnosis']['new'],
-                $_POST['treatment_plan']['new'],
-                $_POST['clinical_exam']['new'],
-                $_POST['animal_statement']['new'],
-                $_POST['health_notes']['new']
+                $_POST['diagnosis']['new'] ?? '',
+                $_POST['treatment_plan']['new'] ?? '',
+                $_POST['clinical_exam']['new'] ?? '',
+                $_POST['animal_statement']['new'] ?? '',
+                $_POST['health_notes']['new'] ?? ''
             ]
         );
     }
@@ -205,6 +210,13 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
 <body>
 <!-- Navigation bar is commented out // Navigacija je zakomentarisana -->
 <div class="container mt-4">
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?php echo htmlspecialchars($_SESSION['error']); // Display error safely // Prikaži grešku bezbedno ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
     <h2><?php echo $L['add_pet'] ?? 'Add Pet'; // Heading // Naslov ?></h2>
     <form method="POST" enctype="multipart/form-data">
         <div class="row">
@@ -218,7 +230,7 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                     <label class="form-label"><?php echo $L['species'] ?? 'Species'; ?></label>
                     <select class="form-select" name="species">
                         <option value=""><?php echo $L['select_species'] ?? 'Select species'; ?></option>
-                        <option value="dog"><?php echo $L['dog'] ?? 'Dog'; ?></option>
+                        <option value="dog" selected><?php echo $L['dog'] ?? 'Dog'; ?></option>
                         <option value="cat"><?php echo $L['cat'] ?? 'Cat'; ?></option>
                         <option value="rabbit"><?php echo $L['rabbit'] ?? 'Rabbit'; ?></option>
                         <option value="bird"><?php echo $L['bird'] ?? 'Bird'; ?></option>
@@ -276,6 +288,17 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                     <input type="text" class="form-control" id="capture_location" name="capture_location">
                 </div>
                 <div class="mb-3">
+                    <label class="form-label"><?php echo $L['incoming_date'] ?? 'Incoming Date'; ?></label>
+                    <input type="date" class="form-control" name="incoming_date">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><?php echo $L['presence_in_shelter'] ?? 'Presence In Shelter'; ?></label>
+                    <select class="form-select" name="in_shelter">
+                        <option value="1"><?php echo $L['yes'] ?? 'Yes'; ?></option>
+                        <option value="0"><?php echo $L['no'] ?? 'No'; ?></option>
+                    </select>
+                </div>
+                <div class="mb-3">
                     <label for="cage_number" class="form-label"><?php echo $L['cage_number'] ?? 'Cage Number'; ?></label>
                     <input type="text" class="form-control" id="cage_number" name="cage_number">
                 </div>
@@ -286,18 +309,6 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                 <div class="mb-3">
                     <label for="return_date" class="form-label"><?php echo $L['return_date'] ?? 'Return Date'; ?></label>
                     <input type="date" class="form-control" id="return_date" name="return_date">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label"><?php echo $L['presence_in_shelter'] ?? 'Presence In Shelter'; ?></label>
-                    <select class="form-select" name="in_shelter">
-                        <option value="1"><?php echo $L['yes'] ?? 'Yes'; ?></option>
-                        <option value="0"><?php echo $L['no'] ?? 'No'; ?></option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label"><?php echo $L['incoming_date'] ?? 'Incoming Date'; ?></label>
-                    <input type="date" class="form-control" name="incoming_date">
                 </div>
                 <div class="mb-3" id="image-section">
                     <label class="form-label"><?php echo $L['image'] ?? 'Image'; ?></label>

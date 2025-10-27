@@ -14,7 +14,7 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'sr'])) {
     exit();
 }
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to Serbian // Uzmi jezik iz sesije ili podesi na srpski
 $L = [];
 if (file_exists(__DIR__ . '/lang/' . $lang . '.php')) {
     $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
@@ -87,7 +87,21 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
 </nav> -->
 <div class="container mt-4">
     <?php if (isset($_SESSION['message'])): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($_SESSION['message']); unset($_SESSION['message']); // Display message safely // Prikaži poruku bezbedno ?></div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?php echo htmlspecialchars($_SESSION['message']); unset($_SESSION['message']); // Display message safely // Prikaži poruku bezbedno ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+<?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?php echo htmlspecialchars($_SESSION['error']); // Display error safely // Prikaži grešku bezbedno ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <script>
+            // Show JavaScript alert for modal errors // Prikaži JavaScript alert za greške u modalima
+            alert("<?php echo addslashes($_SESSION['error']); ?>");
+        </script>
+        <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -177,13 +191,23 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                     </li>
                     <?php if (!empty($pet['birth_date']) && $pet['birth_date'] !== '0000-00-00'): ?>
                         <li class="list-group-item">
-                            <strong><?php echo $L['date_of_birth'] ?? 'Date of Birth'; ?>:</strong> 
+                            <strong><?php echo $L['date_of_birth'] ?? 'Date of Birth'; ?>:</strong>
                             <?php echo date('d.m.Y', strtotime($pet['birth_date'])); ?>
+                        </li>
+                    <?php endif; ?>
+                    <?php if (!empty($pet['coat_color'])): ?>
+                        <li class="list-group-item">
+                            <strong><?php echo $L['coat_color'] ?? 'Coat Color'; ?>:</strong> <?php echo htmlspecialchars($pet['coat_color']); ?>
+                        </li>
+                    <?php endif; ?>
+                    <?php if (!empty($pet['coat_type'])): ?>
+                        <li class="list-group-item">
+                            <strong><?php echo $L['coat_type'] ?? 'Coat Type'; ?>:</strong> <?php echo htmlspecialchars($pet['coat_type']); ?>
                         </li>
                     <?php endif; ?>
                 </ul>
                 <div class="card-body">
-                    <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff'): ?>
+                    <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer'])): ?>
                         <a href="edit-pet.php?id=<?php echo $pet['id']; ?>" class="card-link btn btn-warning"><?php echo $L['edit'] ?? 'Edit'; ?></a>
                     <?php endif; ?>
                 </div>
@@ -195,10 +219,10 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><?php echo $L['identification'] ?? 'Identification'; ?></h5>
-                    <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff'): ?>
-                        <?php 
-                        $hasIdentificationData = !empty($pet['microchip_number']) || 
-                                                (!empty($pet['microchip_date']) && $pet['microchip_date'] !== '0000-00-00') || 
+                    <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer'])): ?>
+                        <?php
+                        $hasIdentificationData = !empty($pet['microchip_number']) ||
+                                                (!empty($pet['microchip_date']) && $pet['microchip_date'] !== '0000-00-00') ||
                                                 !empty($pet['microchip_location']);
                         ?>
                         <button type="button"
@@ -231,7 +255,7 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><?php echo $L['vaccinations'] ?? 'Vaccinations'; ?></h5>
-                    <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff'): ?>
+                    <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer'])): ?>
                         <button type="button"
                             class="btn btn-sm <?php echo !empty($vaccinations) ? 'btn-warning' : 'btn-primary'; ?>"
                             data-bs-toggle="modal"
@@ -285,7 +309,7 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><?php echo $L['health_checks'] ?? 'Health Checks'; ?></h5>
-                    <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff'): ?>
+                    <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer'])): ?>
                         <button type="button"
                             class="btn btn-sm <?php echo !empty($health_checks) ? 'btn-warning' : 'btn-success'; ?>"
                             data-bs-toggle="modal"
@@ -326,6 +350,9 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                                     </h2>
                                     <div id="collapse<?php echo $index; ?>" class="accordion-collapse collapse <?php echo $index === 0 ? 'show' : ''; ?>" aria-labelledby="heading<?php echo $index; ?>" data-bs-parent="#healthChecksAccordion">
                                         <div class="accordion-body">
+                                            <?php if (!empty($check['check_date']) && $check['check_date'] !== '0000-00-00'): ?>
+                                                <p><strong><?php echo $L['check_date'] ?? 'Check Date'; ?>:</strong> <?php echo date('d.m.Y', strtotime($check['check_date'])); ?></p>
+                                            <?php endif; ?>
                                             <?php if (!empty($check['veterinarian'])): ?>
                                                 <p><strong><?php echo $L['veterinarian'] ?? 'Veterinarian'; ?>:</strong> <?php echo htmlspecialchars($check['veterinarian'] ?? ''); ?></p>
                                             <?php endif; ?>

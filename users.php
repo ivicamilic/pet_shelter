@@ -7,7 +7,7 @@ require_once 'includes/functions.php'; // Load helper functions // U훾itaj pomo�
 redirectIfNotLoggedIn(); // Redirect if user is not logged in // Preusmeri ako korisnik nije prijavljen
 redirectIfNotAdmin();    // Redirect if user is not admin // Preusmeri ako korisnik nije admin
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
 $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // U훾itaj fajl sa prevodom
 
 $users = $db->fetchAll("SELECT * FROM user ORDER BY created_at DESC"); // Fetch all users // Uzmi sve korisnike
@@ -51,12 +51,13 @@ include 'includes/header.php'; // Include header // Uklju훾i zaglavlje
                                 <td><?php echo htmlspecialchars($user['email']); // Display email safely // Prika탑i email bezbedno ?></td>
                                 <td><?php echo htmlspecialchars($user['full_name']); // Display full name safely // Prika탑i puno ime bezbedno ?></td>
                                 <td>
-                                    <span class="badge 
-                                        <?php 
+                                    <span class="badge
+                                        <?php
                                         // Color coding for roles // Boja za uloge
                                         switch($user['role']) {
                                             case 'admin': echo 'bg-danger'; break;
                                             case 'staff': echo 'bg-info'; break;
+                                            case 'info': echo 'bg-warning'; break;
                                             default: echo 'bg-secondary';
                                         }
                                         ?>">

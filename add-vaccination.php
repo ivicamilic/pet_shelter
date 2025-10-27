@@ -6,15 +6,15 @@ ini_set('display_errors', 1); // Show errors (for development) // Prikaži greš
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-$lang = $_SESSION['lang'] ?? 'en'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
+$lang = $_SESSION['lang'] ?? 'sr'; // Get language from session or default to English // Uzmi jezik iz sesije ili podesi na engleski
 $L = [];
 if (file_exists(__DIR__ . '/lang/' . $lang . '.php')) {
     $L = require __DIR__ . '/lang/' . $lang . '.php'; // Load language file // Učitaj fajl sa prevodom
 }
 
-// Check if user is logged in and not a Volunteer // Proveri da li je korisnik prijavljen i da nije volonter
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] === 'Volunteer') {
-    header('Location: pets.php'); // Redirect to pets // Preusmeri na ljubimce
+// Check if user is logged in // Proveri da li je korisnik prijavljen
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login // Preusmeri na prijavu
     exit();
 }
 
@@ -28,15 +28,22 @@ $pet_id = (int)$_GET['pet_id']; // Get pet_id as integer // Uzmi pet_id kao ceo 
 
 // Handle form submission // Obradi slanje forme
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if user is volunteer role - prevent save // Proveri da li je korisnik "volunteer" uloge - spreči čuvanje
+    if ($_SESSION['role'] === 'volunteer') {
+        $_SESSION['error'] = $L['save_not_allowed'] ?? 'Save not allowed for this role'; // Set error message // Postavi poruku o grešci
+        header("Location: view-pet.php?id=$pet_id"); // Redirect back // Preusmeri nazad
+        exit();
+    }
+
     // No required field validation needed // Nema potrebe za validacijom obaveznih polja
 
     // Sanitize input // Očisti ulaz
     $vaccine_type = htmlspecialchars($_POST['vaccine_type']);
     $vaccine_name = htmlspecialchars($_POST['vaccine_name']);
-    $vaccination_date = $_POST['vaccination_date'] ?: '';
+    $vaccination_date = $_POST['vaccination_date'] ?: '0000-00-00';
     $batch_number = htmlspecialchars($_POST['batch_number']);
     $veterinarian = htmlspecialchars($_POST['veterinarian']);
-    $expiry_date = $_POST['expiry_date'] ?: '';
+    $expiry_date = $_POST['expiry_date'] ?: '0000-00-00';
 
     // Insert vaccination using prepared statement // Unesi vakcinaciju koristeći pripremljeni upit
     $db->query(
@@ -91,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Vaccination Date // Datum vakcinacije -->
             <div class="col-md-6 mb-3">
                 <label class="form-label"><?php echo htmlspecialchars($L['vaccination_date'] ?? 'Vaccination Date'); ?></label>
-                <input type="date" class="form-control" name="vaccination_date" required>
+                <input type="date" class="form-control" name="vaccination_date">
             </div>
             <!-- Expiry Date // Datum isteka -->
             <div class="col-md-6 mb-3">
