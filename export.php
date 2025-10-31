@@ -11,14 +11,22 @@ redirectIfNotLoggedIn(); // Redirect if user is not logged in // Preusmeri ako k
 $format = $_GET['format'] ?? 'xls'; // Get export format // Uzmi format izvoza
 $search = isset($_GET['search']) ? trim($_GET['search']) : ''; // Get search query // Uzmi upit za pretragu
 
+// Filter for guest users: only show pets in shelter (in_shelter = 1) // Filter za korisnike goste: prikaži samo ljubimce u prihvatilištu (in_shelter = 1)
+$where_base = ($_SESSION['role'] === 'guest') ? "WHERE in_shelter = 1" : "";
+
 // Get pets data // Uzmi podatke o ljubimcima
 $params = [];
 $sql = "SELECT * FROM pets";
-$where = "";
+$where = $where_base;
 
 if ($search !== '') {
     // Use prepared statement to prevent SQL injection // Koristi pripremljeni upit radi sprečavanja SQL injekcije
-    $where = " WHERE name LIKE ? OR breed LIKE ? OR microchip_number LIKE ? ";
+    $search_condition = " name LIKE ? OR breed LIKE ? OR microchip_number LIKE ? ";
+    if ($where === "") {
+        $where = " WHERE " . $search_condition;
+    } else {
+        $where .= " AND " . $search_condition;
+    }
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";

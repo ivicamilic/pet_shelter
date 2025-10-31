@@ -75,7 +75,7 @@ $search = $_GET['search'] ?? '';
                         <?php endif; ?>
                     </a>
                 </th>
-                <th class="text-center"><?php echo $L['actions'] ?? 'Actions'; ?></th>
+                <th class="text-center" style="margin-left: 30rem;"><?php echo $L['actions'] ?? 'Actions'; ?></th>
             </tr>
         </thead>
         <tbody>
@@ -105,12 +105,12 @@ $search = $_GET['search'] ?? '';
                     <td class="text-center"><?php echo htmlspecialchars($pet['cage_number'] ?? ''); // Display cage safely // Prikaži broj boksa bezbedno ?></td>
 
                     <td class="text-center">
-                        <div class="d-flex gap-1">
-                            <a href="view-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-info"><?php echo $L['view'] ?? 'View'; // View button // Dugme za prikaz ?></a>
-                            <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer'])): ?>
+                        <div class="d-flex<?php echo ($_SESSION['role'] == 'volunteer') ? ' justify-content-end' : ' gap-1'; ?>">
+                            <a href="view-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-info<?php echo ($_SESSION['role'] === 'volunteer') ? ' me-5' : ''; ?>"><?php echo $L['view'] ?? 'View'; // View button // Dugme za prikaz ?></a>
+                            <?php if (in_array($_SESSION['role'], ['admin', 'staff'])): ?>
                                 <a href="edit-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-warning"><?php echo $L['edit'] ?? 'Edit'; // Edit button // Dugme za izmenu ?></a>
                             <?php endif; ?>
-                            <?php if (in_array($_SESSION['role'], ['admin', 'staff', 'volunteer']) || ($_SESSION['role'] === 'staff' && $_SESSION['user_id'] == $pet['created_by'])): ?>
+                            <?php if (in_array($_SESSION['role'], ['admin', 'staff']) || ($_SESSION['role'] === 'staff' && $_SESSION['user_id'] == $pet['created_by'])): ?>
                                 <!-- Delete button with confirmation // Dugme za brisanje sa potvrdom -->
                                 <a href="delete-pet.php?id=<?php echo $pet['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirmDelete(<?php echo $pet['id']; ?>, '<?php echo addslashes($pet['microchip_number'] ?? ''); ?>')">
                                     <?php echo $L['delete'] ?? 'Delete'; // Delete button // Dugme za brisanje ?>
@@ -144,27 +144,3 @@ $search = $_GET['search'] ?? '';
         <?php endif; ?>
     </ul>
 </nav>
-
-<script>
-    // JavaScript code for handling the search // JavaScript za pretragu
-    document.getElementById('searchButton').addEventListener('click', function() {
-        var searchValue = document.getElementById('searchInput').value;
-        fetch(`pets.php?search=${encodeURIComponent(searchValue)}&limit=<?php echo $limit; ?>&ajax=1&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>`)
-            .then(response => response.json())
-            .then(data => {
-                // Handle the response data to update the pets table // Obradi podatke za ažuriranje tabele
-                console.log(data);
-            });
-    });
-    
-    // Confirmation dialog for delete // Dijalog za potvrdu brisanja
-    function confirmDelete(petId, microchipNumber) {
-        var identifier = microchipNumber ? microchipNumber : petId;
-        var message = '<?php echo ($L['confirm_delete_pet'] ?? 'Are you sure you want to delete'); ?> ' + identifier + '?\n<?php echo ($L['this_action_cannot_be_undone'] ?? 'This action cannot be undone.'); ?>';
-        if (confirm(message)) {
-            window.location.href = 'delete-pet.php?id=' + petId;
-            return true;
-        }
-        return false; // Prevent default link action when cancelled // Spreči podrazumevanu akciju linka ako je otkazano
-    }
-</script>

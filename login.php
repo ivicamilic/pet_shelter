@@ -49,14 +49,17 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                     <form method="POST">
                         <div class="mb-3">
                             <label for="username" class="form-label"><?php echo $L['username'] ?? 'Username'; // Username label // Oznaka za korisničko ime ?></label>
-                            <input type="text" class="form-control" id="username" name="username" required>
+                            <input type="text" class="form-control" id="username" name="username" value="gost" placeholder="gost" required>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label"><?php echo $L['password'] ?? 'Password'; // Password label // Oznaka za lozinku ?></label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <input type="password" class="form-control" id="password" name="password" value="novigost" placeholder="novigost" required>
                         </div>
                         <button type="submit" class="btn btn-primary"><?php echo $L['login'] ?? 'Login'; // Login button // Dugme za prijavu ?></button>
                     </form>
+                    <div class="alert alert-info mt-3">
+                        Korisnik gost se može ulogovati klikom na dugme Prijava
+                    </div>
                 </div>
                 <div class="card-footer text-center">
                     <?php echo $L['dont_have_account'] ?? 'Don\'t have an account?'; // Register prompt // Poruka za registraciju ?> 

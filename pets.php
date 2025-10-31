@@ -30,14 +30,32 @@ $count_params = [];
 $where = "";
 
 if ($search !== '') {
+    // Bilingual search mapping // Dvojezično mapiranje pretrage
+    $searchLower = strtolower($search);
+    $searchMappings = [
+        'da' => 'yes', 'yes' => 'da',
+        'ne' => 'no', 'no' => 'ne',
+        'mužjak' => 'male', 'male' => 'mužjak',
+        'ženka' => 'female', 'female' => 'ženka'
+    ];
+    $alternativeSearch = $searchMappings[$searchLower] ?? $searchLower;
+    
     // Use prepared statement to prevent SQL injection // Koristi pripremljeni upit radi sprečavanja SQL injekcije
-    $where = " WHERE microchip_number LIKE ? OR capture_location LIKE ? OR DATE_FORMAT(incoming_date, '%d.%m.%Y') LIKE ? OR cage_number LIKE ? OR (in_shelter = 1 AND ? LIKE '%yes%') OR (in_shelter = 0 AND ? LIKE '%no%') ";
+    $search_condition = " microchip_number LIKE ? OR capture_location LIKE ? OR DATE_FORMAT(incoming_date, '%d.%m.%Y') LIKE ? OR cage_number LIKE ? OR (CASE WHEN sex = 'female' THEN 'ženka' WHEN sex = 'male' THEN 'mužjak' ELSE sex END LIKE ? OR sex LIKE ?) OR (CASE WHEN in_shelter = 1 THEN 'da' ELSE 'ne' END LIKE ? OR CASE WHEN in_shelter = 1 THEN 'yes' ELSE 'no' END LIKE ?) ";
+    if ($where === "") {
+        $where = " WHERE " . $search_condition;
+    } else {
+        $where .= " AND " . $search_condition;
+    }
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
-    $params[] = strtolower($search);
-    $params[] = strtolower($search);
+    $params[] = "%$search%";
+    $params[] = "%$alternativeSearch%";
+    $params[] = "%$search%";
+    $params[] = "%$alternativeSearch%";
+
     
     // Same parameters for count query // Isti parametri za brojanje
     $count_params = $params;
@@ -57,10 +75,19 @@ $pets = $db->fetchAll($sql, $params); // Fetch pets // Uzmi ljubimce
 
 // Handle AJAX requests // Obradi AJAX zahteve
 if (isset($_GET['ajax'])) {
+    echo "DEBUG: AJAX received for search='" . htmlspecialchars($_GET['search'] ?? '') . "' limit=" . intval($_GET['limit'] ?? 10) . "\n";
     // Return only table body and pagination for AJAX // Vrati samo telo tabele i paginaciju za AJAX
     ob_start();
-    include 'pets_table.php';
-    echo ob_get_clean();
+    echo '<!--AJAX_START-->';
+    include 'pets_table_1.php';
+    echo '<!--AJAX_END-->';
+    $ajax_content = ob_get_clean();
+    echo "DEBUG: AJAX content length=" . strlen($ajax_content) . "\n";
+    if (empty(trim($ajax_content))) {
+        echo 'ERROR: Empty AJAX content';
+    } else {
+        echo $ajax_content;
+    }
     exit;
 }
 
@@ -122,13 +149,15 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
                     <input type="hidden" name="order" value="<?php echo htmlspecialchars($_GET['order'] ?? ''); ?>">
                 <?php endif; ?>
             </form>
+            <?php if (isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff')): ?>
             <a href="export.php?format=xls<?php echo $search ? '&search=' . urlencode($search) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . urlencode($_GET['sort']) : ''; ?><?php echo isset($_GET['order']) ? '&order=' . urlencode($_GET['order']) : ''; ?>" class="btn btn-outline-success btn-sm ms-2">
                 <i class="bi bi-file-earmark-excel"></i> <?php echo $L['export_xls'] ?? 'Export XLS'; ?>
             </a>
             <a href="export.php?format=pdf" target="_blank" class="btn btn-outline-danger btn-sm ms-2">
                 <i class="bi bi-file-earmark-pdf"></i> <?php echo $L['export_pdf'] ?? 'Export PDF'; ?>
             </a>
-            <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff' || $_SESSION['role'] === 'volunteer'): ?>
+            <?php endif; ?>
+            <?php if (isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'staff')): ?>
                 <a href="add-pet.php" class="btn btn-outline-primary btn-sm ms-2"><i class="bi bi-plus-circle"></i> <?php echo $L['add_new_pet'] ?? 'Add New Pet'; ?></a>
             <?php endif; ?>
         </div>
@@ -159,24 +188,47 @@ include 'includes/header.php'; // Include header // Uključi zaglavlje
 </div>
 
 <script>
-let searchTimeout;
-// Live search with debounce // Pretraga uživo sa odloženim izvršenjem
-document.getElementById('searchInput').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    const searchValue = this.value;
-    searchTimeout = setTimeout(() => {
-        fetch(`pets.php?search=${encodeURIComponent(searchValue)}&limit=<?php echo $limit; ?>&ajax=1&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>`)
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newTable = doc.querySelector('.table-pets tbody');
-                const newPagination = doc.querySelector('.pagination');
-                if (newTable) document.querySelector('.table-pets tbody').innerHTML = newTable.innerHTML;
-                if (newPagination) document.querySelector('.pagination').innerHTML = newPagination.innerHTML;
-            });
-    }, 300);
-});
+// Debounce function // Funkcija debounca
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, arguments), wait);
+    };
+}
+
+// Function for performing live search // Funkcija za izvršavanje live pretrage
+function performLiveSearch(searchValue) {
+    fetch(`pets.php?search=${encodeURIComponent(searchValue)}&limit=<?php echo $limit; ?>&ajax=1&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.text();
+        })
+        .then(html => {
+            console.log('Received HTML for search:', searchValue, 'length:', html.length);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTable = doc.querySelector('.table-pets tbody');
+            const newPagination = doc.querySelector('.pagination');
+            console.log('newTable found:', !!newTable, 'newPagination found:', !!newPagination);
+            if (newTable) document.querySelector('.table-pets tbody').innerHTML = newTable.innerHTML;
+            if (newPagination) document.querySelector('.pagination').innerHTML = newPagination.innerHTML;
+        })
+        .catch(error => {
+            console.error('Live search fetch error:', error);
+        });
+}
+
+// Live search with debounce // Pretraga uživo sa debouncom
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', debounce(function() {
+        const searchValue = this.value;
+        performLiveSearch(searchValue);
+    }, 150));
+}
 
 // Delete confirmation modal // Modal za potvrdu brisanja
 function confirmDelete(petId, petName) {

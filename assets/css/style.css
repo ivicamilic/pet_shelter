@@ -59,6 +59,14 @@ body {
     font-weight: 500;
 }
 
+/* Centriranje teksta u dugmadima Export XLS, Export PDF i Add New Pet */
+.btn-outline-success.btn-sm.ms-2, .btn-outline-danger.btn-sm.ms-2, .btn-outline-primary.btn-sm.ms-2 {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
 /* Alert Styles */
 .alert {
     border-radius: 5px;
@@ -161,4 +169,4 @@ body {
 #file-upload-button {
     border-top-left-radius: 0.375rem !important;
     border-bottom-left-radius: 0.375rem !important;
-}   
+}
